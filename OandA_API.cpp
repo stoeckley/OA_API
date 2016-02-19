@@ -5,8 +5,6 @@ OA::OA_API::OA_API()
 {
     RestClient::init();
     restConn = new RestClient::Connection("https://api-fxpractice.oanda.com");
-
-
 }
 
 void OA::OA_API::useAccount(string localAccount)
@@ -23,7 +21,6 @@ bool OA::OA_API::refreshOrders()
 {
     //bool returnValue = false;
     vector<OA::Order> localOrders;
-    
     Json::Value currentOrders;
     Json::Reader reader;
 
@@ -118,8 +115,6 @@ bool OA::OA_API::refreshPositions()
     return false;
 }
 
-
-
 bool OA::OA_API::createOrder(string instrument, int units, string side, string type, string ex, double price, double takeProfit)
 {
     //boost::posix_time::ptime time_now(second_clock::local_time());
@@ -206,12 +201,147 @@ bool OA::OA_API::deleteOrder(unsigned long long int id)
     return returnValue;
 }
 
+bool OA::OA_API::initInstrument(OA::Instrument *localInstrument)
+{
+    if (localInstrument->theBars.size() != 0)
+    {
+        cout << "Looks like its ready to go!" << endl;
+        return false;
+    }
+
+    //Get initial bar load up
+
+    //boost::posix_time::ptime(boost::)
+
+    vector<OA::Bar> starterBars = getBars(localInstrument->symbol, localInstrument->granularity, boost::posix_time::ptime(boost::posix_time::not_a_date_time), boost::posix_time::ptime(boost::posix_time::not_a_date_time), 100);
+
+    localInstrument->theBars = starterBars;
+
+    return true;
+}
+
+vector<OA::Bar> OA::OA_API::getBars(string instrument, string granularity, boost::posix_time::ptime start, boost::posix_time::ptime end, int count)
+{
+
+    vector<OA::Bar> localBars;
+    Json::Value historyBars;
+    Json::Reader reader;
+
+    RestClient::HeaderFields headers;
+    headers["Authorization"] = "Bearer ca2624a2fcb1374847a802ed7bb38295-813cd7c17bdf044a90ebcd274b1414c4";
+    headers["X-Accept-Datetime-Format"] = "RFC3339";
+    headers["Content-Type"] = "application/x-www-form-urlencoded";
+    restConn->SetHeaders(headers);
+
+    string url = "/v1/candles?instrument=" + instrument + "&granularity=" + granularity + "&candleFormat=midpoint";
+
+    cout << "Testing start and end: " << boost::posix_time::to_iso_extended_string(start) << ", End: " << boost::posix_time::to_iso_extended_string(end) << endl;
+
+    if (!start.is_not_a_date_time() && !end.is_not_a_date_time())
+    {
+        cout << "Getting history for Start: " << boost::posix_time::to_iso_extended_string(start) << ", End: " << boost::posix_time::to_iso_extended_string(end) << endl;
+
+        string startString = urlEncode(to_iso_extended_string(start) + "Z" );
+        string endString = urlEncode(to_iso_extended_string(end) + "Z" );
+
+        url += "&start=";
+        url += startString;
+
+        url += "&end=";
+        url += endString;
+
+        cout << "URL: " << url << endl;
+    }
+    else if (!start.is_not_a_date_time() && end.is_not_a_date_time() && count != 0)
+    {
+        string startString = urlEncode(to_iso_extended_string(start) + "Z" );
+
+        url += "&start=";
+        url += startString;
+
+        url += "&count=";
+        url += to_string(count);
+
+        cout << "URL: " << url << endl;
+    }
+    else if (start.is_not_a_date_time() && !end.is_not_a_date_time() && count != 0)
+    {
+        string endString = urlEncode(to_iso_extended_string(end) + "Z" );
+
+        url += "&end=";
+        url += endString;
+
+        url += "&count=";
+        url += to_string(count);
+
+        cout << "URL: " << url << endl;
+    }
+    else if (count != 0)
+    {
+        url += "&count=";
+        url += to_string(count);
+    }
 
 
+    RestClient::Response r = restConn->get(url);
+    if (r.code != 200)
+    {
+        cout << r.body << endl;
+    }
+
+    reader.parse(r.body, historyBars);
+
+    for (Json::ValueIterator itr = historyBars["candles"].begin() ; itr != historyBars["candles"].end() ; itr++)
+    {
+
+        Json::Value singleCandleJSON = *itr;
+        //cout << "This is the single orders: " << endl << singleOrderJSON << endl;
+
+        if (singleCandleJSON["complete"].asBool())
+        {
+            OA::Bar singleCandle;
+
+            singleCandle.open = singleCandleJSON["openMid"].asDouble();
+            singleCandle.high = singleCandleJSON["highMid"].asDouble();
+            singleCandle.low = singleCandleJSON["lowMid"].asDouble();
+            singleCandle.close = singleCandleJSON["closeMid"].asDouble();
+            singleCandle.timeStamp = singleCandleJSON["time"].asString();
+
+            localBars.push_back(singleCandle);
+        }
+    }
 
 
+    return localBars;
+}
+
+bool OA::OA_API::refreshBars(struct OA::Instrument * localInstrument)
+{
+    cout << "Number of bars: " << localInstrument->theBars.size() << endl;
+
+    if (localInstrument->theBars.size() == 0)
+    {
+        cout << "No bars, we should add 100+" << endl;
+
+    }
+    else
+    {
+        cout << "There are bars, add to them" << endl;
+
+    }
+
+    return false;
+}
+
+/*
+OA::Instrument::Instrument()
+{
 
 
+}
+
+
+*/
 
 
 

@@ -13,7 +13,8 @@
 //#include <restclient-cpp/restclient.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "functions.hpp"
+//#include "f"
+#include "../../functions.hpp"
 
 using namespace std;
 
@@ -65,12 +66,14 @@ namespace OA
         double high;
         double low;
         string timeStamp;
-         
+
         bool operator == (const string& test) const
         {
             return  test == timeStamp;
         }
-            
+        Bar()
+        {
+        }
         Bar(double tempOpen, double tempClose, double tempHigh, double tempLow, string tempTimeStamp)
         {
             open = tempOpen;
@@ -78,10 +81,21 @@ namespace OA
             high = tempHigh;
             low = tempLow;
             timeStamp = tempTimeStamp;
-        }     
+        }
     };
 
+    struct Instrument
+    {
+        string symbol;
+        string granularity;
+        double pipValue;
+        vector<Bar> theBars;
+    };
+
+
+
     class OA_API;
+    //class Instrument;
         
 }
 
@@ -104,10 +118,15 @@ class OA::OA_API
         bool refreshOrders();
         bool refreshTrades();
         bool refreshPositions();
-        
-    
-    
 
+        bool initInstrument(struct OA::Instrument * localInstrument);
+        vector<OA::Bar> getBars(string instrument, string granularity, boost::posix_time::ptime start, boost::posix_time::ptime end, int count = 0);
+        bool refreshBars(struct OA::Instrument * localInstrument);
+        
+
+
+        vector<Instrument> theInstruments;
+    
         vector<OA::Order> orders;
         vector<OA::Trade> trades;
         vector<OA::Position> positions;
