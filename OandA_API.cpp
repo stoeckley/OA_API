@@ -203,7 +203,7 @@ bool OA::OA_API::deleteOrder(unsigned long long int id)
 
 bool OA::OA_API::initInstrument(OA::Instrument *localInstrument)
 {
-    if (localInstrument->theBars.size() != 0)
+    if (localInstrument->getBarCount() != 0)
     {
         cout << "Looks like its ready to go!" << endl;
         return false;
@@ -215,7 +215,7 @@ bool OA::OA_API::initInstrument(OA::Instrument *localInstrument)
 
     vector<OA::Bar> starterBars = getBars(localInstrument->symbol, localInstrument->granularity, boost::posix_time::ptime(boost::posix_time::not_a_date_time), boost::posix_time::ptime(boost::posix_time::not_a_date_time), 100);
 
-    localInstrument->theBars = starterBars;
+    localInstrument->addBars(starterBars);
 
     return true;
 }
@@ -315,7 +315,7 @@ vector<OA::Bar> OA::OA_API::getBars(string instrument, string granularity, boost
     return localBars;
 }
 
-bool OA::OA_API::refreshBars(struct OA::Instrument * localInstrument)
+bool OA::OA_API::refreshBars(OA::Instrument * localInstrument)
 {
     cout << "Number of bars: " << localInstrument->theBars.size() << endl;
 
@@ -333,15 +333,64 @@ bool OA::OA_API::refreshBars(struct OA::Instrument * localInstrument)
     return false;
 }
 
-/*
+
+
+//Instrument Implementation
+
 OA::Instrument::Instrument()
 {
-
+    symbol = "";
+    granularity = "";
+    pipValue = 0;
 
 }
 
+void OA::Instrument::addBars(vector<OA::Bar> localBars)
+{
+    for (auto &iter : localBars)
+    {
+        bool test = false;
+        vector<OA::Bar> localBar = iter;
+        for (auto &it : theBars)
+        {
+            if (*it == localBar)
+            {
+                test = true;
+            }
+        }
 
-*/
+        if (test)
+        {
+            theBars.push_back(localBar);
+        }
+    }
+
+}
+
+int OA::Instrument::getBarCount()
+{
+    return theBars.size();
+}
+
+vector<OA::Bar> OA::Instrument::getBars()
+{
+    return theBars;
+}
+
+void OA::Instrument::setGranularity(string theGranularity)
+{
+    granularity = theGranularity;
+}
+
+void OA::Instrument::setPipValue(double value)
+{
+    pipValue = value;
+}
+
+void OA::Instrument::setSymbol(string theSymbol)
+{
+    symbol = theSymbol;
+}
 
 
 

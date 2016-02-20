@@ -84,6 +84,7 @@ namespace OA
         }
     };
 
+/*
     struct Instrument
     {
         string symbol;
@@ -91,11 +92,11 @@ namespace OA
         double pipValue;
         vector<Bar> theBars;
     };
-
+*/
 
 
     class OA_API;
-    //class Instrument;
+    class Instrument;
         
 }
 
@@ -119,9 +120,9 @@ class OA::OA_API
         bool refreshTrades();
         bool refreshPositions();
 
-        bool initInstrument(struct OA::Instrument * localInstrument);
+        bool initInstrument(OA::Instrument * localInstrument);
         vector<OA::Bar> getBars(string instrument, string granularity, boost::posix_time::ptime start, boost::posix_time::ptime end, int count = 0);
-        bool refreshBars(struct OA::Instrument * localInstrument);
+        bool refreshBars(OA::Instrument * localInstrument);
         
 
 
@@ -145,7 +146,40 @@ class OA::OA_API
 
 };
 
+class OA::Instrument
+{
+    public:
 
+        string symbol;
+        string granularity;
+        double pipValue;
+        vector<Bar> theBars;
+
+
+
+        Instrument();
+        ~Instrument();
+
+        void setSymbol(string theSymbol);
+        void setGranularity(string theGranularity);
+        void setPipValue(double value);
+
+        void addBars(vector<OA::Bar> localBars);
+        int getBarCount();
+        vector<OA::Bar> getBars();
+        vector<OA::Bar> getBars(int count);
+
+private:
+
+
+
+
+
+
+
+
+
+};
 
 
 
