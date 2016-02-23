@@ -3,6 +3,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 
 //#include <curlpp/cURLpp.hpp>
 //#include <curlpp/Easy.hpp>
@@ -66,6 +67,7 @@ namespace OA
         double high;
         double low;
         string timeStamp;
+        boost::posix_time::ptime timeStamp2;
 
         bool operator == (const string& test) const
         {
@@ -124,8 +126,6 @@ class OA::OA_API
         vector<OA::Bar> getBars(string instrument, string granularity, boost::posix_time::ptime start, boost::posix_time::ptime end, int count = 0);
         bool refreshBars(OA::Instrument * localInstrument);
         
-
-
         vector<Instrument> theInstruments;
     
         vector<OA::Order> orders;
@@ -149,6 +149,8 @@ class OA::OA_API
 class OA::Instrument
 {
     public:
+        Instrument();
+        ~Instrument();
 
         string symbol;
         string granularity;
@@ -156,9 +158,6 @@ class OA::Instrument
         vector<Bar> theBars;
 
 
-
-        Instrument();
-        ~Instrument();
 
         void setSymbol(string theSymbol);
         void setGranularity(string theGranularity);

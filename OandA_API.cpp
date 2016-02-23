@@ -7,6 +7,11 @@ OA::OA_API::OA_API()
     restConn = new RestClient::Connection("https://api-fxpractice.oanda.com");
 }
 
+OA::OA_API::~OA_API()
+{
+
+}
+
 void OA::OA_API::useAccount(string localAccount)
 {
     account = localAccount;
@@ -252,20 +257,24 @@ vector<OA::Bar> OA::OA_API::getBars(string instrument, string granularity, boost
 
         cout << "URL: " << url << endl;
     }
-    else if (!start.is_not_a_date_time() && end.is_not_a_date_time() && count != 0)
+    else if (!start.is_not_a_date_time() && end.is_not_a_date_time())
     {
+        cout << "Getting history for Start: " << boost::posix_time::to_iso_extended_string(start) << endl;
         string startString = urlEncode(to_iso_extended_string(start) + "Z" );
 
         url += "&start=";
         url += startString;
 
-        url += "&count=";
-        url += to_string(count);
+        //url += "&count=";
+        //url += to_string(count);
+
+        url += "&includeFirst=false";
 
         cout << "URL: " << url << endl;
     }
     else if (start.is_not_a_date_time() && !end.is_not_a_date_time() && count != 0)
     {
+        cout << "Getting history for End: " << boost::posix_time::to_iso_extended_string(start) << endl;
         string endString = urlEncode(to_iso_extended_string(end) + "Z" );
 
         url += "&end=";
@@ -293,25 +302,25 @@ vector<OA::Bar> OA::OA_API::getBars(string instrument, string granularity, boost
 
     for (Json::ValueIterator itr = historyBars["candles"].begin() ; itr != historyBars["candles"].end() ; itr++)
     {
-
         Json::Value singleCandleJSON = *itr;
         //cout << "This is the single orders: " << endl << singleOrderJSON << endl;
 
         if (singleCandleJSON["complete"].asBool())
         {
             OA::Bar singleCandle;
-
+            std::string timeStamp;
             singleCandle.open = singleCandleJSON["openMid"].asDouble();
             singleCandle.high = singleCandleJSON["highMid"].asDouble();
             singleCandle.low = singleCandleJSON["lowMid"].asDouble();
             singleCandle.close = singleCandleJSON["closeMid"].asDouble();
             singleCandle.timeStamp = singleCandleJSON["time"].asString();
 
+            timeStamp = singleCandleJSON["time"].asString();
+            singleCandle.timeStamp2 = convertTimestamp2(convertTimestamp(timeStamp));
+
             localBars.push_back(singleCandle);
         }
     }
-
-
     return localBars;
 }
 
@@ -321,17 +330,35 @@ bool OA::OA_API::refreshBars(OA::Instrument * localInstrument)
 
     if (localInstrument->theBars.size() == 0)
     {
-        cout << "No bars, we should add 100+" << endl;
-
+        cout << "No bars, we should add 100+. You should call initInstrument() first" << endl;
+        return false;
     }
     else
     {
         cout << "There are bars, add to them" << endl;
-
     }
 
-    return false;
+    OA::Bar lastBar = localInstrument->theBars.back();
+    string lastTS = lastBar.timeStamp;
+    localInstrument->addBars(OA::OA_API::getBars(localInstrument->symbol, localInstrument->granularity, lastBar.timeStamp2, boost::posix_time::not_a_date_time, 0));
+
+    //vector<OA::Bar> newBars = OA::OA_API::getBars(localInstrument->symbol, localInstrument->granularity, )
+
+    return true;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -345,24 +372,20 @@ OA::Instrument::Instrument()
 
 }
 
+OA::Instrument::~Instrument()
+{
+
+
+}
+
 void OA::Instrument::addBars(vector<OA::Bar> localBars)
 {
-    for (auto &iter : localBars)
+    for (vector<OA::Bar>::iterator it = localBars.begin(); it < localBars.end(); it++)
     {
-        bool test = false;
-        vector<OA::Bar> localBar = iter;
-        for (auto &it : theBars)
-        {
-            if (*it == localBar)
-            {
-                test = true;
-            }
-        }
+        OA::Bar localBar = *it;
 
-        if (test)
-        {
-            theBars.push_back(localBar);
-        }
+        theBars.push_back(localBar);
+
     }
 
 }
